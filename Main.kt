@@ -1,8 +1,7 @@
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+
 fun main() {
     exibirMenssagemBoasVidas()
-     exibirMenuPrincipal()
+    exibirMenuPrincipal()
 
 }
 
@@ -13,7 +12,7 @@ fun exibirMenssagemBoasVidas(){
 }
 fun exibirMenuPrincipal(){
     while (true) {
-        println("Menu principal")
+        println("/Menu principal")
         println("1 -> Começar")
         println("2 -> Regras")
         println("3 -> Pontuação")
@@ -33,10 +32,114 @@ fun exibirMenuPrincipal(){
         }
     }
 }
-fun iniciaJogo(){
-    println("Agora é com vocês sam e Arthur...")
+// codigo samsam
+
+fun iniciaJogo() {
+    val tamanhoTabuleiro = selecionarTamanhoTabuleiro()
+    val (jogador1, jogador2) = registrarJogadores()
+    val tabuleiro = criarTabuleiro(tamanhoTabuleiro)
+
+    println("\nTabuleiro configurado com sucesso! Pronto para iniciar...")
 }
 
+// selecionar tamanho
+private fun selecionarTamanhoTabuleiro(): Int {
+    while (true) {
+        println("\nQUAL O TAMANHO DE TABULEIRO DESEJA JOGAR?")
+        println("a. 4x4")
+        println("b. 6x6")
+        println("c. 8x8")
+        println("d. 10x10")
+        print("DIGITE A OPÇÃO: ")
+
+        when (readlnOrNull()?.lowercase()) {
+            "a" -> return 4
+            "b" -> return 6
+            "c" -> return 8
+            "d" -> return 10
+            else -> println("\nPor favor, escolha uma das opções de tamanho de tabuleiro disponíveis (a-d)")
+        }
+    }
+}
+
+// registrar jogadores
+private fun registrarJogadores(): Pair<Jogador, Jogador> {
+    val jogador1 = Jogador(
+        nome = solicitarNome(1),
+        cor = "Vermelho"
+    )
+
+    val jogador2 = Jogador(
+        nome = solicitarNome(2),
+        cor = "Azul"
+    )
+
+    return Pair(jogador1, jogador2)
+}
+
+private fun solicitarNome(numeroJogador: Int): String {
+    print("\nQUAL O APELIDO DA(O) PARTICIPANTE $numeroJogador? ")
+    val nome = readlnOrNull()?.trim()
+    return if (nome.isNullOrEmpty()) {
+        "PARTICIPANTE0$numeroJogador"
+    } else {
+        nome.uppercase()
+    }
+}
+
+private data class Jogador(
+    val nome: String,
+    val cor: String,
+    var pontos: Int = 0
+)
+
+// criaçao do tabuleiro
+private fun criarTabuleiro(tamanho: Int): Array<Array<Carta>> {
+    val totalPares = (tamanho * tamanho) / 2
+
+    // define a distribuição de cores
+    val paresPretos = 1
+    val paresVermelhoAzul = totalPares / 2
+    val paresAmarelos = totalPares - paresPretos - paresVermelhoAzul
+
+    // cria a lista de carta
+    val cartas = mutableListOf<Carta>()
+
+
+    repeat(paresPretos) {
+        cartas.add(Carta(cor = "Preto", figura = "XX"))
+        cartas.add(Carta(cor = "Preto", figura = "XX"))
+    }
+
+    repeat(paresVermelhoAzul) { index ->
+        val cor = if (index % 2 == 0) "Vermelho" else "Azul"
+        val figura = "F${index + 1}"
+        cartas.add(Carta(cor = cor, figura = figura))
+        cartas.add(Carta(cor = cor, figura = figura))
+    }
+
+    repeat(paresAmarelos) { index ->
+        val figura = "A${index + 1}"
+        cartas.add(Carta(cor = "Amarelo", figura = figura))
+        cartas.add(Carta(cor = "Amarelo", figura = figura))
+    }
+
+    // embaralhaa
+    cartas.shuffle()
+
+    return Array(tamanho) { row ->
+        Array(tamanho) { col ->
+            cartas[row * tamanho + col]
+        }
+    }
+}
+
+private data class Carta(
+    val cor: String,
+    val figura: String,
+    var virada: Boolean = false
+)
+// fim codigo sam
 fun exibirRegras() {
     println("========================================")
     println("            REGRAS DE PONTUAÇÃO             ")
