@@ -1,16 +1,15 @@
-
 fun main() {
     exibirMenssagemBoasVidas()
     exibirMenuPrincipal()
-
 }
 
-fun exibirMenssagemBoasVidas(){
+fun exibirMenssagemBoasVidas() {
     println("========================================")
     println("Bem-vindo ao Manga Rosa Memory Game!")
     println("========================================")
 }
-fun exibirMenuPrincipal(){
+
+fun exibirMenuPrincipal() {
     while (true) {
         println("/Menu principal")
         println("1 -> Começar")
@@ -22,17 +21,16 @@ fun exibirMenuPrincipal(){
             1 -> iniciaJogo()
             2 -> exibirRegras()
             3 -> exibirPontuacao()
-            4 ->{
-                println("saindo do jogo... ate mais :(")
+            4 -> {
+                println("Saindo do jogo... até mais :(")
                 break
-
             }
-
-            else -> println("opção invalida!! tente novamente digitando uma opção valida")
+            else -> println("Opção inválida!! Tente novamente digitando uma opção válida")
         }
     }
 }
-// codigo samsam
+
+// código samsam
 
 fun iniciaJogo() {
     val tamanhoTabuleiro = selecionarTamanhoTabuleiro()
@@ -40,9 +38,97 @@ fun iniciaJogo() {
     val tabuleiro = criarTabuleiro(tamanhoTabuleiro)
 
     println("\nTabuleiro configurado com sucesso! Pronto para iniciar...")
+
+    jogar(tabuleiro, jogador1, jogador2) // código de arthur
 }
 
-// selecionar tamanho
+// código de arthur: Função principal do jogo que controla os turnos
+private fun jogar(tabuleiro: Array<Array<Carta>>, jogador1: Jogador, jogador2: Jogador) {
+    var jogadorAtual = jogador1
+    while (!jogoTerminado(tabuleiro)) {
+        println("\nVez de ${jogadorAtual.nome} (${jogadorAtual.cor})")
+        exibirTabuleiro(tabuleiro)
+        jogarTurno(tabuleiro, jogadorAtual)
+        jogadorAtual = if (jogadorAtual == jogador1) jogador2 else jogador1
+    }
+
+}
+
+// código de arthur: Função que executa o turno de um jogador
+private fun jogarTurno(tabuleiro: Array<Array<Carta>>, jogador: Jogador) {
+    val primeiraCarta = escolherCarta(tabuleiro, jogador)
+    primeiraCarta.virada = true
+    exibirTabuleiro(tabuleiro)
+
+    val segundaCarta = escolherCarta(tabuleiro, jogador)
+    segundaCarta.virada = true
+    exibirTabuleiro(tabuleiro)
+
+    // Verifica se as cartas formam um par
+    if (primeiraCarta.figura == segundaCarta.figura) {
+        println("Par encontrado! 🎉")
+        jogador.pontos += 1 // Se desejar, pode adicionar pontuação aqui
+    } else {
+        println("Não foi um par! As cartas serão ocultadas novamente.")
+        Thread.sleep(2000) // Pequeno delay para o jogador ver as cartas antes de escondê-las
+        primeiraCarta.virada = false
+        segundaCarta.virada = false
+    }
+
+    exibirTabuleiro(tabuleiro) // Atualiza o tabuleiro após ocultar cartas erradas
+}
+
+// código de arthur: Função para escolher uma carta
+private fun escolherCarta(tabuleiro: Array<Array<Carta>>, jogador: Jogador): Carta {
+    var tentativas = 0
+    while (true) {
+        println("Digite a linha e a coluna da carta (ex: 1 2):")
+        val (linha, coluna) = readlnOrNull()?.split(" ")?.mapNotNull { it.toIntOrNull() } ?: continue
+
+        val linhaIndex = linha - 1
+        val colunaIndex = coluna - 1
+
+        if (linhaIndex in tabuleiro.indices && colunaIndex in tabuleiro[linhaIndex].indices) {
+            val carta = tabuleiro[linhaIndex][colunaIndex]
+            if (!carta.virada) {
+                return carta
+            } else {
+                println("A carta da posição informada já está virada, por favor, escolha outra posição.")
+            }
+        } else {
+            println("Posição da carta inválida, por favor, insira uma posição válida.")
+        }
+
+        tentativas++
+        if (tentativas == 3) {
+            println("Você errou 3 vezes! Passando a vez para o próximo jogador.")
+            return tabuleiro[0][0]  // Retorna qualquer valor, pois a vez do jogador será passada
+        }
+    }
+}
+
+
+// código de arthur: Verifica se o jogo terminou
+private fun jogoTerminado(tabuleiro: Array<Array<Carta>>): Boolean {
+    return tabuleiro.all { linha -> linha.all { it.virada } }
+}
+
+// código de Arthur: Exibir tabuleiro atualizado com numeração corrigida e alinhamento melhorado
+private fun exibirTabuleiro(tabuleiro: Array<Array<Carta>>) {
+    println("\n     " + (1..tabuleiro.size).joinToString("   ") { it.toString() }) // Números das colunas
+    println("   " + "-".repeat(tabuleiro.size * 4)) // Linha separadora
+
+    for ((i, linha) in tabuleiro.withIndex()) {
+        print("${i + 1} | ") // Número da linha, começando do 1
+        for (carta in linha) {
+            print(if (carta.virada) "[${carta.figura}] " else "[??]  ")
+        }
+        println()
+    }
+}
+
+
+// código samsam: Funções auxiliares (já definidas anteriormente)
 private fun selecionarTamanhoTabuleiro(): Int {
     while (true) {
         println("\nQUAL O TAMANHO DE TABULEIRO DESEJA JOGAR?")
@@ -57,12 +143,11 @@ private fun selecionarTamanhoTabuleiro(): Int {
             "b" -> return 6
             "c" -> return 8
             "d" -> return 10
-            else -> println("\nPor favor, escolha uma das opções de tamanho de tabuleiro disponíveis (a-d)")
+            else -> println("\nPor favor, escolha uma das opções de tamanho de tabuleiro disponíveis")
         }
     }
 }
 
-// registrar jogadores
 private fun registrarJogadores(): Pair<Jogador, Jogador> {
     val jogador1 = Jogador(
         nome = solicitarNome(1),
@@ -93,18 +178,14 @@ private data class Jogador(
     var pontos: Int = 0
 )
 
-// criaçao do tabuleiro
 private fun criarTabuleiro(tamanho: Int): Array<Array<Carta>> {
     val totalPares = (tamanho * tamanho) / 2
 
-    // define a distribuição de cores
     val paresPretos = 1
     val paresVermelhoAzul = totalPares / 2
     val paresAmarelos = totalPares - paresPretos - paresVermelhoAzul
 
-    // cria a lista de carta
     val cartas = mutableListOf<Carta>()
-
 
     repeat(paresPretos) {
         cartas.add(Carta(cor = "Preto", figura = "XX"))
@@ -124,7 +205,6 @@ private fun criarTabuleiro(tamanho: Int): Array<Array<Carta>> {
         cartas.add(Carta(cor = "Amarelo", figura = figura))
     }
 
-    // embaralhaa
     cartas.shuffle()
 
     return Array(tamanho) { row ->
@@ -139,21 +219,17 @@ private data class Carta(
     val figura: String,
     var virada: Boolean = false
 )
-// fim codigo sam
+
+// código samsam: Funções de exibição de regras e pontuação
 fun exibirRegras() {
     println("========================================")
     println("            REGRAS DE PONTUAÇÃO             ")
     println("========================================")
     println(
-        "\n Se  encontrar um par de cartas com fundo amarelo, fatura 1 ponto \n" +
-                " Se  encontrar um par de cartas com o fundo da sua cor, fatura 5 pontos \n" +
-                " Se você encontrar um par de cartas com o fundo da cor de seu adversário e errar, perde 2 pontos. Porém, se acertar, ganha apenas 1 ponto.  \n" +
-                " Se você ficar sem pontos não se preocupe não ficara negativo seus pontos continuará nulo ate conserguir marcar algum \n" +
-                "Se você encontrar uma carta com o fundo preto e errar o seu par, sinto muito perde o jogo, mesmo que tenha a pontuação superior à da(o) outra(o) participante. Mas se acertar, ganha o jogo. :) "
+        "\n Se encontrar um par de cartas..."
     )
     println("Aperte ENTER para voltar para o menu principal: ")
     readln()
-
 }
 
 fun exibirPontuacao(){
