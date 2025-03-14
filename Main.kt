@@ -1,17 +1,26 @@
 fun main() {
-    exibirMenssagemBoasVidas()
+    exibirMenssagemBoasVindas()
     exibirMenuPrincipal()
 }
 
-fun exibirMenssagemBoasVidas() {
+fun exibirMenssagemBoasVindas() {
     println("========================================")
     println("Bem-vindo ao Manga Rosa Memory Game!")
     println("========================================")
 }
 
+data class ResultadoJogo(
+    val nomeJogador1: String,
+    val pontosJogador1: Int,
+    val nomeJogador2: String,
+    val pontosJogador2: Int,
+)
+
+val historicoJogos = mutableListOf<ResultadoJogo>()
+
 fun exibirMenuPrincipal() {
     while (true) {
-        println("/Menu principal")
+        println("\nMenu principal")
         println("1 -> Começar")
         println("2 -> Regras")
         println("3 -> Pontuação")
@@ -45,52 +54,158 @@ fun iniciaJogo() {
 // código de arthur: Função principal do jogo que controla os turnos
 private fun jogar(tabuleiro: Array<Array<Carta>>, jogador1: Jogador, jogador2: Jogador) {
     var jogadorAtual = jogador1
+    var jogadorAguardando = jogador2
     while (!jogoTerminado(tabuleiro)) {
         println("\nVez de ${jogadorAtual.nome} (${jogadorAtual.cor})")
         exibirTabuleiro(tabuleiro)
-        jogarTurno(tabuleiro, jogadorAtual)
-        jogadorAtual = if (jogadorAtual == jogador1) jogador2 else jogador1
+        jogarTurno(tabuleiro, jogadorAtual, jogadorAguardando)
+        jogadorAtual = jogadorAguardando.also { jogadorAguardando = jogadorAtual }
     }
-
+    anunciarVencedor(jogador1, jogador2)
 }
 
 // código de arthur: Função que executa o turno de um jogador
-private fun jogarTurno(tabuleiro: Array<Array<Carta>>, jogador: Jogador) {
-    val primeiraCarta = escolherCarta(tabuleiro, jogador)
-    primeiraCarta.virada = true
-    exibirTabuleiro(tabuleiro)
+private fun jogarTurno(tabuleiro: Array<Array<Carta>>, jogadorAtual: Jogador, jogadorAguardando: Jogador) {
+    val codigoResetarCor = "\u001B[0m"
+    val codigoCor = when (jogadorAtual.cor) {
+        "Vermelho" -> "\u001B[31m"
+        "Azul" -> "\u001B[34m"
+        else -> ""
+    }
+    println("\nTurno de ${jogadorAtual.nome} ($codigoCor${jogadorAtual.cor}$codigoResetarCor):")
+    val primeiraCarta = escolherCarta(tabuleiro, jogadorAtual, "primeira")
+    if (primeiraCarta == null) {
+        println("${jogadorAtual.nome} perdeu a vez.")
+        return
+    }
+    val segundaCarta = escolherCarta(tabuleiro, jogadorAtual, "segunda")
+    if (segundaCarta == null) {
+        println("${jogadorAtual.nome} perdeu a vez.")
+        primeiraCarta.virada = false
+        return
+    }
 
-    val segundaCarta = escolherCarta(tabuleiro, jogador)
+    // Vira as cartas
     segundaCarta.virada = true
     exibirTabuleiro(tabuleiro)
 
     // Verifica se as cartas formam um par
     if (primeiraCarta.figura == segundaCarta.figura) {
-        println("Par encontrado! 🎉")
-        jogador.pontos += 1 // Se desejar, pode adicionar pontuação aqui
+        tratarAcerto(jogadorAtual, jogadorAguardando, primeiraCarta.cor)
     } else {
-        println("Não foi um par! As cartas serão ocultadas novamente.")
-        Thread.sleep(2000) // Pequeno delay para o jogador ver as cartas antes de escondê-las
+        if (primeiraCarta.figura == "XXX" || jogadorAguardando.cor == primeiraCarta.cor
+        ) {
+            tratarErro(jogadorAtual, jogadorAguardando, primeiraCarta.cor)
+        } else {
+            if(segundaCarta.figura == "XXX") {
+                tratarErro(jogadorAtual, jogadorAguardando, primeiraCarta.cor)
+            } else {
+                tratarErro(jogadorAtual, jogadorAguardando, segundaCarta.cor)
+            }
+        }
+        // Vira as cartas de volta, pois houve erro
         primeiraCarta.virada = false
         segundaCarta.virada = false
     }
 
-    exibirTabuleiro(tabuleiro) // Atualiza o tabuleiro após ocultar cartas erradas
+    println("A pontuação de ${jogadorAtual.nome}: ${jogadorAtual.pontos}")
+    println("A pontuação de ${jogadorAguardando.nome}: ${jogadorAguardando.pontos}")
+
+}
+
+private fun tratarAcerto(jogadorAtual: Jogador, jogadorAguardando: Jogador, cor: String) {
+    when (cor) {
+        "Amarelo" -> {
+            jogadorAtual.pontos += 1
+            println("\nVocê acertou! Ganhou 1 ponto, pois a carta era amarela.")
+        }
+        jogadorAtual.cor -> {
+            jogadorAtual.pontos += 5
+            println("\nExcelente! Ganhou 5 pontos por acertar a sua cor.")
+        }
+        jogadorAguardando.cor -> {
+            jogadorAtual.pontos += 1
+            println("\nBoa! Ganhou 1 ponto, pois a carta era da cor do adversário.")
+        }
+        "Preto" -> {
+            jogadorAtual.pontos += 50
+            println("\nParabéns! Uma carta preta foi aberta e o par foi encontrado.")
+        }
+    }
+}
+
+private fun tratarErro(jogadorAtual: Jogador, jogadorAguardando: Jogador, cor: String) {
+    when (cor) {
+        jogadorAguardando.cor -> {
+            jogadorAtual.pontos = maxOf(0, jogadorAtual.pontos - 2)
+            println("\nErrou! Perdeu 2 pontos, pois uma das cartas era do adversário.")
+        }
+        "Preto" -> {
+            jogadorAtual.pontos = maxOf(0, jogadorAtual.pontos - 50)
+            println("\nQue pena! Uma carta preta foi aberta e o par não foi encontrado.")
+        }
+    }
+}
+
+private fun mensagemFimDeJogo() {
+    println("\n╔═══════════════════════════════════════════╗")
+    println("║              Fim de Jogo!                 ║")
+    println("╚═══════════════════════════════════════════╝\n")
+}
+
+private fun anunciarVencedor(jogador1: Jogador, jogador2: Jogador) {
+    val vencedor = if (jogador1.pontos > jogador2.pontos) jogador1
+    else if (jogador2.pontos > jogador1.pontos) jogador2
+    else null
+
+    mensagemFimDeJogo()
+
+    if (vencedor != null) {
+        println("Vencedor: ${vencedor.nome} com ${vencedor.pontos} pontos!")
+    } else {
+        println("Empate! Ambos os jogadores terminaram com ${jogador1.pontos} pontos.")
+    }
+
+    println("\nPontuações Finais:")
+    println("${jogador1.nome}: ${jogador1.pontos}")
+    println("${jogador2.nome}: ${jogador2.pontos}")
+
+    // Salvar o resultado do jogo no histórico
+    historicoJogos.add(ResultadoJogo(jogador1.nome, jogador1.pontos, jogador2.nome, jogador2.pontos))
+
+    println("\nPressione ENTER para voltar ao menu principal...")
+    readlnOrNull()
 }
 
 // código de arthur: Função para escolher uma carta
-private fun escolherCarta(tabuleiro: Array<Array<Carta>>, jogador: Jogador): Carta {
+private fun escolherCarta(tabuleiro: Array<Array<Carta>>, jogador: Jogador,ordinal: String): Carta? {
     var tentativas = 0
-    while (true) {
-        println("Digite a linha e a coluna da carta (ex: 1 2):")
-        val (linha, coluna) = readlnOrNull()?.split(" ")?.mapNotNull { it.toIntOrNull() } ?: continue
+    val tamanhoTabuleiro = tabuleiro.size
+    while (tentativas < 3) {
+        print("Digite a linha (1-$tamanhoTabuleiro) da $ordinal carta:")
+        val linhaInput = readlnOrNull()
+        print("Digite a coluna (1-$tamanhoTabuleiro) da $ordinal carta:")
+        val colunaInput = readlnOrNull()
 
-        val linhaIndex = linha - 1
-        val colunaIndex = coluna - 1
+        val numeroLinha = linhaInput?.toIntOrNull()
+        val numeroColuna = colunaInput?.toIntOrNull()
 
-        if (linhaIndex in tabuleiro.indices && colunaIndex in tabuleiro[linhaIndex].indices) {
-            val carta = tabuleiro[linhaIndex][colunaIndex]
+        if (numeroLinha == null || numeroColuna == null || numeroLinha !in 1..tamanhoTabuleiro || numeroColuna !in 1..tamanhoTabuleiro) {
+            println("Posição inválida. Insira números de 1 a $tamanhoTabuleiro.")
+            tentativas++
+            continue
+        }
+
+        val linha = numeroLinha - 1
+        val coluna = numeroColuna - 1
+
+        if (linha in tabuleiro.indices && coluna in tabuleiro[linha].indices) {
+            val carta = tabuleiro[linha][coluna]
             if (!carta.virada) {
+                if (ordinal == "primeira") {
+                    carta.virada = true
+                    exibirTabuleiro(tabuleiro)
+                }
                 return carta
             } else {
                 println("A carta da posição informada já está virada, por favor, escolha outra posição.")
@@ -100,11 +215,9 @@ private fun escolherCarta(tabuleiro: Array<Array<Carta>>, jogador: Jogador): Car
         }
 
         tentativas++
-        if (tentativas == 3) {
-            println("Você errou 3 vezes! Passando a vez para o próximo jogador.")
-            return tabuleiro[0][0]  // Retorna qualquer valor, pois a vez do jogador será passada
-        }
     }
+    println("Você errou 3 vezes. Perdeu a vez.")
+    return null
 }
 
 
@@ -115,16 +228,32 @@ private fun jogoTerminado(tabuleiro: Array<Array<Carta>>): Boolean {
 
 // código de Arthur: Exibir tabuleiro atualizado com numeração corrigida e alinhamento melhorado
 private fun exibirTabuleiro(tabuleiro: Array<Array<Carta>>) {
-    println("\n     " + (1..tabuleiro.size).joinToString("   ") { it.toString() }) // Números das colunas
-    println("   " + "-".repeat(tabuleiro.size * 4)) // Linha separadora
-
-    for ((i, linha) in tabuleiro.withIndex()) {
-        print("${i + 1} | ") // Número da linha, começando do 1
-        for (carta in linha) {
-            print(if (carta.virada) "[${carta.figura}] " else "[??]  ")
+    println("\n═══════ Tabuleiro Atual ═══════")
+    print("      ")
+    for (j in tabuleiro.indices) {
+        print("${j + 1}".padEnd(6))
+    }
+    println()
+    for (i in tabuleiro.indices) {
+        print("${i + 1}".padEnd(4))
+        for (j in tabuleiro[i].indices) {
+            val carta = tabuleiro[i][j]
+            val simbolo = if (carta.virada) {
+                val codigoCor = when (carta.cor) {
+                    "Vermelho" -> "\u001B[31m" // Vermelho
+                    "Azul" -> "\u001B[34m" // Azul
+                    "Amarelo" -> "\u001B[33m" // Amarelo
+                    "Preto" -> "\u001B[30m" // Preto
+                    else -> ""
+                }
+                val codigoReset = "\u001B[0m"
+                "[$codigoCor${carta.figura}$codigoReset]"
+            } else "▓▒▒▒▓"
+            print("$simbolo ")
         }
         println()
     }
+    println("═══════════════════════════════")
 }
 
 
@@ -188,19 +317,19 @@ private fun criarTabuleiro(tamanho: Int): Array<Array<Carta>> {
     val cartas = mutableListOf<Carta>()
 
     repeat(paresPretos) {
-        cartas.add(Carta(cor = "Preto", figura = "XX"))
-        cartas.add(Carta(cor = "Preto", figura = "XX"))
+        cartas.add(Carta(cor = "Preto", figura = "XXX"))
+        cartas.add(Carta(cor = "Preto", figura = "XXX"))
     }
-
+    fun formatarNumero(i: Int) = String.format("%02d", i)
     repeat(paresVermelhoAzul) { index ->
         val cor = if (index % 2 == 0) "Vermelho" else "Azul"
-        val figura = "F${index + 1}"
+        val figura = "F${formatarNumero(index + 1)}"
         cartas.add(Carta(cor = cor, figura = figura))
         cartas.add(Carta(cor = cor, figura = figura))
     }
 
     repeat(paresAmarelos) { index ->
-        val figura = "A${index + 1}"
+        val figura = "A${formatarNumero(index + 1)}"
         cartas.add(Carta(cor = "Amarelo", figura = figura))
         cartas.add(Carta(cor = "Amarelo", figura = figura))
     }
@@ -225,13 +354,44 @@ fun exibirRegras() {
     println("========================================")
     println("            REGRAS DE PONTUAÇÃO             ")
     println("========================================")
-    println(
-        "\n Se encontrar um par de cartas..."
-    )
+    println("\nSe encontrar um par de cartas da sua cor: +5 pontos")
+    println("Se encontrar um par de cartas da cor do adversário: +1 ponto")
+    println("Se encontrar um par de cartas amarelas: +1 ponto")
+    println("Se encontrar um par de cartas pretas: +50 pontos")
+    println("\nSe errar e virar uma carta da cor do adversário: -2 pontos")
+    println("Se errar e virar uma carta preta: -50 pontos")
+    println("\nO jogo termina quando todas as cartas forem viradas.")
+    println("O jogador com mais pontos vence!")
     println("Aperte ENTER para voltar para o menu principal: ")
     readln()
 }
 
-fun exibirPontuacao(){
-    println("É contigo meu mano tony...")
+fun exibirPontuacao() {
+    println("========================================")
+    println("            HISTÓRICO DE JOGOS          ")
+    println("========================================")
+
+    if (historicoJogos.isEmpty()) {
+        println("\nAinda não há jogos registrados.")
+    } else {
+        println("\nÚltimos resultados (mais recentes primeiro):")
+        historicoJogos.reversed().forEachIndexed { index, resultado ->
+            println("\nJogo #${historicoJogos.size - index}")
+            println("${resultado.nomeJogador1}: ${resultado.pontosJogador1} pontos")
+            println("${resultado.nomeJogador2}: ${resultado.pontosJogador2} pontos")
+
+            val vencedor = if (resultado.pontosJogador1 > resultado.pontosJogador2)
+                resultado.nomeJogador1
+            else if (resultado.pontosJogador2 > resultado.pontosJogador1)
+                resultado.nomeJogador2
+            else
+                "Empate"
+
+            println("Resultado: ${if (vencedor != "Empate") "Vencedor - $vencedor" else vencedor}")
+            println("----------------------------------------")
+        }
+    }
+
+    println("\nAperte ENTER para voltar para o menu principal: ")
+    readln()
 }
