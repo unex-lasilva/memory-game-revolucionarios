@@ -10,6 +10,7 @@ import com.example.memorygamerevolucionarios.screens.BoardSizeScreen
 import com.example.memorygamerevolucionarios.screens.GameBoardScreen
 import com.example.memorygamerevolucionarios.screens.MainMenuScreen
 import com.example.memorygamerevolucionarios.screens.PlayerRegistrationScreen
+import com.example.memorygamerevolucionarios.screens.ScoresScreen
 import com.example.memorygamerevolucionarios.viewmodel.GameViewModel
 
 @Composable
@@ -32,6 +33,10 @@ fun AppNavigation(navController: NavHostController, gameViewModel: GameViewModel
                 navController = navController,
                 boardSize = boardSize
             )
+        }
+
+        composable("scores") {
+            ScoresScreen(navController = navController, gameViewModel = gameViewModel)
         }
 
         composable(
