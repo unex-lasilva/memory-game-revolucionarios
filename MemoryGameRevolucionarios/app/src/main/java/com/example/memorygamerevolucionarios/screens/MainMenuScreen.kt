@@ -70,7 +70,7 @@ fun MainMenuScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
-            onClick = {},
+            onClick = { navController.navigate("board_size") },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "Jogar", fontSize = 18.sp)

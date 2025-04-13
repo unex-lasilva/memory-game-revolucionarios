@@ -7,9 +7,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.memorygamerevolucionarios.navigation.AppNavigation
 import com.example.memorygamerevolucionarios.ui.theme.MemoryGameRevolucionariosTheme
+import com.example.memorygamerevolucionarios.viewmodel.GameViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,8 +23,8 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
-
-                    AppNavigation(navController = navController)
+                    val gameViewModel: GameViewModel = viewModel()
+                    AppNavigation(navController = navController, gameViewModel = gameViewModel)
                 }
             }
         }
