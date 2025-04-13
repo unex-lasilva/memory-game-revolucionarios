@@ -15,7 +15,7 @@ val CardBlue = Color(0xFF0000FF)
 val CardRed = Color(0xFFFF0000)
 val CardYellow = Color(0xFFFFFF00)
 val CardBlack = Color(0xFF000000)
-val CardGray = Color(0xFF808080)
+val CardBack= Color(0xFF808080)
 
 // Cores para o Gradiente
 val GradientStart = Color(0xFF3700B3)
