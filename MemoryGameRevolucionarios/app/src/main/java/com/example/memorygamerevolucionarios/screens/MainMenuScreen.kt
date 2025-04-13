@@ -79,7 +79,7 @@ fun MainMenuScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = {},
+            onClick = { navController.navigate("scores")},
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "Pontuação dos participantes", fontSize = 18.sp)

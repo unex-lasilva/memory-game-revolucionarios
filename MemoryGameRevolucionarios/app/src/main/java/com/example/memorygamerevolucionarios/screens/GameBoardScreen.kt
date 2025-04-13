@@ -119,6 +119,13 @@ fun GameBoardScreen(
             }
         }
     }
+    if (gameState.gameOver) {
+        GameOverDialog(
+            players = gameState.players,
+            onPlayAgain = { navController.navigate("board_size") },
+            onMainMenu = { navController.navigate("main_menu") }
+        )
+    }
 }
 
 @Composable
@@ -206,6 +213,59 @@ fun MemoryCard(card: Card, onCardClick: () -> Unit) {
             }
         )
     }
+}
+
+@Composable
+fun GameOverDialog(
+    players: List<Player>,
+    onPlayAgain: () -> Unit,
+    onMainMenu: () -> Unit
+) {
+    val winner = players.maxByOrNull { it.score }
+
+    AlertDialog(
+        onDismissRequest = { },
+        title = { Text("O Jogo Acabou") },
+        text = {
+            Column {
+                if (winner != null) {
+                    Text("${winner.name} ganhou!")
+                } else {
+                    Text("Vish empatou!")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                players.forEach { player ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(getColorForPlayer(player.color))
+                        )
+
+                        Text(
+                            text = "${player.name}: ${player.score}",
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = onPlayAgain) {
+                Text("Jogar de novo")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onMainMenu) {
+                Text("Voltar para o Menu")
+            }
+        }
+    )
 }
 
 @Composable
