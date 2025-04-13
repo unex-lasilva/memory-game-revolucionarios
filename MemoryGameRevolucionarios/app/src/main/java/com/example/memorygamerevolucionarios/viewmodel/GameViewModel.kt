@@ -73,14 +73,49 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
         if (flippedCards.size == 2 || card.isMatched || card.isFlipped) return
 
-        // Aqui vem a logica de virar a carta
+        val updatedCards = currentState.cards.map {
+            if (it.id == card.id) it.copy(isFlipped = true) else it
+        }
+
+        _gameState.update { it.copy(cards = updatedCards) }
+
+        val flippedCard = updatedCards.first { it.id == card.id }
+        flippedCards.add(flippedCard)
+
+        if (flippedCards.size == 2) {
+            checkForMatch()
+        }
     }
 
     private fun checkForMatch() {
         val (card1, card2) = flippedCards
         val currentState = _gameState.value
 
-       // Comparar as cartas pra saber se são iguais ou diferentes
+        if (card1.name == card2.name) {
+
+            val updatedCards = currentState.cards.map {
+                if (it.id == card1.id || it.id == card2.id) it.copy(isMatched = true) else it
+            }
+
+            _gameState.update { it.copy(cards = updatedCards) }
+
+            updateScore(card1.color)
+        } else {
+
+            viewModelScope.launch {
+                delay(1000)
+                val updatedCards = currentState.cards.map {
+                    if (it.id == card1.id || it.id == card2.id) it.copy(isFlipped = false) else it
+                }
+
+                _gameState.update { it.copy(cards = updatedCards) }
+                switchPlayer()
+            }
+        }
+
+        flippedCards.clear()
+
+        checkGameOver()
     }
 
     private fun updateScore(color: String) {
@@ -95,7 +130,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val currentPlayerIndex = currentState.currentPlayerIndex
         var nextPlayerIndex = (currentPlayerIndex + 1) % currentState.players.size
 
-       // Interação de trocar a vez dos jogadores
+        while (currentState.players[nextPlayerIndex].isEliminated &&
+            currentState.players.count { !it.isEliminated } > 1) {
+            nextPlayerIndex = (nextPlayerIndex + 1) % currentState.players.size
+        }
+
+        _gameState.update { it.copy(currentPlayerIndex = nextPlayerIndex) }
     }
 
     private fun checkGameOver() {
